@@ -1,0 +1,37 @@
+﻿{
+    "name": "Clay",
+    "items":[
+        {
+            "type": "tile",
+            "name": "Block Wall",
+            "tile-type": "Wall",
+            "floors": [
+                { "id":0, "path":"data/tiles/clay/Wall00.png", "freq":1.0 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Empty Tile Floor",
+            "tile-type": "Floor",
+            "floors": [
+                { "id":2, "path":"data/tiles/clay/Floor00.png", "freq":1.0 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Down Stair",
+            "tile-type": "DownStair",
+            "floors": [
+                { "id":9, "path":"data/tiles/clay/DownStair.png", "freq":1.0 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Up Stair",
+            "tile-type": "UpStair",
+            "floors": [
+                { "id":10, "path":"data/tiles/clay/UpStair.png", "freq":1.00 }
+            ]
+        }
+    ]
+}

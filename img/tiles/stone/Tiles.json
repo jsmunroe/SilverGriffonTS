@@ -1,0 +1,43 @@
+﻿{
+    "name": "Stone",
+    "items":[
+        {
+            "type": "tile",
+            "name": "Block Wall",
+            "tile-type": "Wall",
+            "floors": [
+                { "path":"data/tiles/stone/Wall00.png", "freq":1.0 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Empty Tile Floor",
+            "tile-type": "Floor",
+            "floors": [
+                { "path":"data/tiles/stone/Floor00.png", "freq":1.0 },
+                { "path":"data/tiles/stone/Floor01.png", "freq":0.01 },
+                { "path":"data/tiles/stone/Floor02.png", "freq":0.01 },
+                { "path":"data/tiles/stone/Floor03.png", "freq":0.01 },
+                { "path":"data/tiles/stone/Floor04.png", "freq":0.01 },
+                { "path":"data/tiles/stone/Floor05.png", "freq":0.01 },
+                { "path":"data/tiles/stone/Floor06.png", "freq":0.01 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Down Stair",
+            "tile-type": "DownStair",
+            "floors": [
+                { "path":"data/tiles/stone/DownStair.png", "freq":1.00 }
+            ]
+        },
+        {
+            "type": "tile",
+            "name": "Up Stair",
+            "tile-type": "UpStair",
+            "floors": [
+                { "path":"data/tiles/stone/UpStair.png", "freq":1.00 }
+            ]
+        }
+    ]
+}
