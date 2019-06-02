@@ -36,7 +36,7 @@ var Config = {
         moveRight: ['ArrowRight', 'KeyD'],
         pause: ['Escape']
     },
-    tileSize: 60,
+    tileSize: 40,
     playerZoom: 2,
     theme: DefaultTheme,
     characters: {

@@ -32,6 +32,10 @@ namespace Lightspeed {
             return new Vector(this.x + other.x, this.y + other.y);
         }
 
+        public subtract(other: Vector) :Vector {
+            return new Vector(this.x - other.x, this.y - other.y);
+        }
+
         public scale(scalar: number) :Vector {
             return new Vector(this.x * scalar, this.y * scalar);
         }

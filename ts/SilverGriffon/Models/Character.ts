@@ -3,7 +3,7 @@ namespace SilverGriffon {
         private _environment: Environment;
         private _sprite: Sprite;
 
-        private _speed: number = 0.05;
+        private _speed: number = 2;
 
         private _direction: Direction = Direction.South;
 
@@ -14,24 +14,29 @@ namespace SilverGriffon {
 
         get position() { return this._position; }
 
-        constructor(environment: Environment, config: any, locationInRoom?: Vector) {
+        get box() { return new Box(this._position.x - 10, this._position.y, 20, 16); }
+
+        constructor(environment: Environment, config: any, position?: Vector) {
             this._environment = environment;
-            this._sprite = new Sprite(config.spritePath, 48, 48, 12);
-            this._position = locationInRoom || new Vector();
+            this._sprite = new Sprite(config.spritePath, 32, 32, 12);
+            this._position = position || new Vector();
         }
 
         move(direction: Vector) {
             direction = direction.normal;
 
             this._velocity = direction.scale(this._speed);
+            this._position = this._position.add(this._velocity);
+        }
+
+        offset(offset: Vector) {
+            this._position = this._position.add(offset);
         }
 
         update(context: Lightspeed.FrameUpdateContext): void {
             if (this.controller) {
                 this.controller.update(this, context);
             }
-
-            this._position = this._position.add(this._velocity);
         }
 
         render(context: Lightspeed.FrameRenderContext): void {
@@ -45,11 +50,12 @@ namespace SilverGriffon {
                 }
             }
             
-            var frame = this.getDirection() * 3 + frameOffset;
+            var frame = this.getDirection() * 3 + frameOffset;;
 
-            var location = this._position.add(new Vector(0.5, 0.5)).scale(Config.tileSize);
+            this._sprite.draw(context.ctx, this._position, frame);
 
-            this._sprite.draw(context.ctx, location, frame);
+            // context.ctx.strokeStyle = 'blue';
+            // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);
         }
 
         private isMoving(): boolean {

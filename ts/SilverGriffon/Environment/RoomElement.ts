@@ -36,6 +36,13 @@ namespace SilverGriffon {
                         }
     
                         tile.sprite.draw(context.ctx, new Vector(x * Config.tileSize, y * Config.tileSize))
+
+                        // if (!tile.passible) {
+                        //     let tileBox = tile.box;
+
+                        //     context.ctx.strokeStyle = 'green';
+                        //     context.ctx.strokeRect(tileBox.left, tileBox.top, tileBox.width, tileBox.height);
+                        // }
                     }
                 }
 

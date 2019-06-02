@@ -14,6 +14,8 @@ namespace SilverGriffon {
             this._tiles = [...new Array(width * height)];
         }
 
+        get allTiles() :Tile[] { return this._tiles; }
+
         get tilesX() :number { return this._width; }
 
         get tilesY() :number { return this._height; }

@@ -107,14 +107,14 @@ var Lightspeed;
         });
         Object.defineProperty(Box.prototype, "right", {
             get: function () {
-                return this._left + this._width - 1;
+                return this._left + this._width;
             },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Box.prototype, "bottom", {
             get: function () {
-                return this._top + this._height - 1;
+                return this._top + this._height;
             },
             enumerable: true,
             configurable: true
@@ -1156,6 +1156,9 @@ var Lightspeed;
         Vector.prototype.add = function (other) {
             return new Vector(this.x + other.x, this.y + other.y);
         };
+        Vector.prototype.subtract = function (other) {
+            return new Vector(this.x - other.x, this.y - other.y);
+        };
         Vector.prototype.scale = function (scalar) {
             return new Vector(this.x * scalar, this.y * scalar);
         };
@@ -1974,7 +1977,7 @@ var Config = {
         moveRight: ['ArrowRight', 'KeyD'],
         pause: ['Escape']
     },
-    tileSize: 60,
+    tileSize: 40,
     playerZoom: 2,
     theme: DefaultTheme,
     characters: {
@@ -2029,25 +2032,32 @@ var SilverGriffon;
         }
         RoomBuilder.prototype.build = function (theme) {
             var room = new SilverGriffon.Room(15, 15);
-            this.drawRect(room, room.box, function () { return new SilverGriffon.WallTile(theme.pickWall()); });
-            this.fillRect(room, room.box.inflate(-1, -1), function () { return new SilverGriffon.FloorTile(theme.pickFloor()); });
+            this.drawRect(room, room.box, function (x, y) { return new SilverGriffon.WallTile(theme.pickWall(), x, y); });
+            this.fillRect(room, room.box.inflate(-1, -1), function (x, y) {
+                if (Random.Current.pick([0, 1], function (i) { return i == 1 ? 8 : 2; })) {
+                    return new SilverGriffon.FloorTile(theme.pickFloor(), x, y);
+                }
+                else {
+                    return new SilverGriffon.WallTile(theme.pickWall(), x, y);
+                }
+            });
             return room;
         };
         RoomBuilder.prototype.fillRect = function (room, rect, pickTile) {
-            for (var y = rect.top; y <= rect.bottom; y++) {
-                for (var x = rect.left; x <= rect.right; x++) {
-                    room.setTile(x, y, pickTile());
+            for (var y = rect.top; y < rect.bottom; y++) {
+                for (var x = rect.left; x < rect.right; x++) {
+                    room.setTile(x, y, pickTile(x, y));
                 }
             }
         };
         RoomBuilder.prototype.drawRect = function (room, rect, pickTile) {
-            for (var y = rect.top; y <= rect.bottom; y++) {
-                room.setTile(0, y, pickTile());
-                room.setTile(rect.right, y, pickTile());
+            for (var y = rect.top; y < rect.bottom; y++) {
+                room.setTile(0, y, pickTile(0, y));
+                room.setTile(rect.right - 1, y, pickTile(rect.right - 1, y));
             }
-            for (var x = rect.left + 1; x < rect.right; x++) {
-                room.setTile(x, 0, pickTile());
-                room.setTile(x, rect.bottom, pickTile());
+            for (var x = rect.left + 1; x < rect.right - 1; x++) {
+                room.setTile(x, 0, pickTile(x, 0));
+                room.setTile(x, rect.bottom - 1, pickTile(x, rect.bottom - 1));
             }
         };
         return RoomBuilder;
@@ -2068,7 +2078,7 @@ var SilverGriffon;
             engine.unpause();
             engine.pushElement(new SilverGriffon.Background());
             engine.pushElement(new SilverGriffon.RoomElement(this._environment));
-            engine.pushElement(new SilverGriffon.GridElement());
+            //engine.pushElement(new GridElement());
         };
         return RoomFlow;
     }(Lightspeed.FlowElement));
@@ -2077,7 +2087,8 @@ var SilverGriffon;
 var SilverGriffon;
 (function (SilverGriffon) {
     var PlayerController = /** @class */ (function () {
-        function PlayerController() {
+        function PlayerController(environment) {
+            this._environment = environment;
         }
         PlayerController.prototype.update = function (character, context) {
             var keys = Config.keys;
@@ -2085,16 +2096,46 @@ var SilverGriffon;
             if (Keyboard.Current.keys(keys.moveUp)) {
                 direction = direction.withY(function (y) { return -1; });
             }
-            if (Keyboard.Current.keys(keys.moveDown)) {
+            else if (Keyboard.Current.keys(keys.moveDown)) {
                 direction = direction.withY(function (y) { return 1; });
             }
-            if (Keyboard.Current.keys(keys.moveLeft)) {
+            else if (Keyboard.Current.keys(keys.moveLeft)) {
                 direction = direction.withX(function (y) { return -1; });
             }
-            if (Keyboard.Current.keys(keys.moveRight)) {
+            else if (Keyboard.Current.keys(keys.moveRight)) {
                 direction = direction.withX(function (y) { return 1; });
             }
             character.move(direction.normal);
+            var offset = this.checkCollisions(character, direction);
+            character.offset(offset);
+        };
+        PlayerController.prototype.checkCollisions = function (character, direction) {
+            var characterBox = character.box;
+            var impassibleTiles = this._environment.currentRoom.allTiles.filter(function (t) { return !t.passible; });
+            var collidingTiles = impassibleTiles.filter(function (t) { return t.box.collides(characterBox); });
+            var offset = new Vector();
+            var _loop_2 = function (i) {
+                var tile = collidingTiles[i];
+                var box = tile.box;
+                centerDiff = characterBox.center.subtract(box.center);
+                if (direction.x > 0 && centerDiff.x < 0) {
+                    offset = offset.withX(function (x) { return Math.min(x, box.left - characterBox.right); });
+                }
+                if (direction.x < 0 && centerDiff.x > 0) {
+                    offset = offset.withX(function (x) { return Math.max(x, box.right - characterBox.left); });
+                }
+                if (direction.y > 0 && centerDiff.y < 0) {
+                    offset = offset.withY(function (y) { return Math.min(y, box.top - characterBox.bottom); });
+                }
+                if (direction.y < 0 && centerDiff.y > 0) {
+                    offset = offset.withY(function (y) { return Math.max(y, box.bottom - characterBox.top); });
+                }
+            };
+            var centerDiff;
+            for (var i = 0; i < collidingTiles.length; i++) {
+                _loop_2(i);
+            }
+            return offset;
         };
         return PlayerController;
     }());
@@ -2118,8 +2159,8 @@ var SilverGriffon;
             configurable: true
         });
         Environment.prototype.createPlayer = function () {
-            this._player = new SilverGriffon.Character(this, Config.characters.player, new Vector(1, 1));
-            this._player.controller = new SilverGriffon.PlayerController();
+            this._player = new SilverGriffon.Character(this, Config.characters.player, new Vector(60, 60));
+            this._player.controller = new SilverGriffon.PlayerController(this);
             return this._player;
         };
         Environment.prototype.createRoom = function () {
@@ -2131,9 +2172,9 @@ var SilverGriffon;
         };
         Environment.prototype.updateCamera = function (context) {
             context.ctx.imageSmoothingEnabled = false;
-            var scaleFactor = 1.5;
+            var scaleFactor = Config.playerZoom;
             var scale = new Vector(scaleFactor, scaleFactor);
-            var translate = new Vector(context.canvasWidth / (2 * scaleFactor) - this.player.position.x * Config.tileSize - Config.tileSize / 2, context.canvasHeight / (2 * scaleFactor) - this.player.position.y * Config.tileSize - Config.tileSize / 2);
+            var translate = new Vector(context.canvasWidth / (2 * scaleFactor) - this.player.position.x, context.canvasHeight / (2 * scaleFactor) - this.player.position.y);
             ;
             context.ctx.scale(scale.x, scale.y);
             context.ctx.translate(translate.x, translate.y);
@@ -2192,6 +2233,11 @@ var SilverGriffon;
                             continue;
                         }
                         tile.sprite.draw(context.ctx, new Vector(x * Config.tileSize, y * Config.tileSize));
+                        // if (!tile.passible) {
+                        //     let tileBox = tile.box;
+                        //     context.ctx.strokeStyle = 'green';
+                        //     context.ctx.strokeRect(tileBox.left, tileBox.top, tileBox.width, tileBox.height);
+                        // }
                     }
                 }
                 var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
@@ -2208,29 +2254,37 @@ var SilverGriffon;
 var SilverGriffon;
 (function (SilverGriffon) {
     var Character = /** @class */ (function () {
-        function Character(environment, config, locationInRoom) {
-            this._speed = 0.05;
+        function Character(environment, config, position) {
+            this._speed = 2;
             this._direction = Direction.South;
             this._position = new Vector();
             this._velocity = new Vector();
             this._environment = environment;
-            this._sprite = new Sprite(config.spritePath, 48, 48, 12);
-            this._position = locationInRoom || new Vector();
+            this._sprite = new Sprite(config.spritePath, 32, 32, 12);
+            this._position = position || new Vector();
         }
         Object.defineProperty(Character.prototype, "position", {
             get: function () { return this._position; },
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(Character.prototype, "box", {
+            get: function () { return new Box(this._position.x - 10, this._position.y, 20, 16); },
+            enumerable: true,
+            configurable: true
+        });
         Character.prototype.move = function (direction) {
             direction = direction.normal;
             this._velocity = direction.scale(this._speed);
+            this._position = this._position.add(this._velocity);
+        };
+        Character.prototype.offset = function (offset) {
+            this._position = this._position.add(offset);
         };
         Character.prototype.update = function (context) {
             if (this.controller) {
                 this.controller.update(this, context);
             }
-            this._position = this._position.add(this._velocity);
         };
         Character.prototype.render = function (context) {
             var frameOffset = 1;
@@ -2241,8 +2295,10 @@ var SilverGriffon;
                 }
             }
             var frame = this.getDirection() * 3 + frameOffset;
-            var location = this._position.add(new Vector(0.5, 0.5)).scale(Config.tileSize);
-            this._sprite.draw(context.ctx, location, frame);
+            ;
+            this._sprite.draw(context.ctx, this._position, frame);
+            // context.ctx.strokeStyle = 'blue';
+            // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);
         };
         Character.prototype.isMoving = function () {
             return this._velocity.magnitude > 0;
@@ -2282,6 +2338,11 @@ var SilverGriffon;
             this._height = height;
             this._tiles = new Array(width * height).slice();
         }
+        Object.defineProperty(Room.prototype, "allTiles", {
+            get: function () { return this._tiles; },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Room.prototype, "tilesX", {
             get: function () { return this._width; },
             enumerable: true,
@@ -2405,9 +2466,28 @@ var SilverGriffon;
 var SilverGriffon;
 (function (SilverGriffon) {
     var Tile = /** @class */ (function () {
-        function Tile(themeElement) {
+        function Tile(themeElement, x, y) {
+            this._x = 0;
+            this._y = 0;
             this._themeElement = themeElement;
+            this._x = x;
+            this._y = y;
         }
+        Object.defineProperty(Tile.prototype, "x", {
+            get: function () { return this._x; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Tile.prototype, "y", {
+            get: function () { return this._y; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Tile.prototype, "box", {
+            get: function () { return new Box(this.x * Config.tileSize, this.y * Config.tileSize, Config.tileSize, Config.tileSize); },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Tile.prototype, "sprite", {
             get: function () {
                 return this._themeElement.sprite;
@@ -2420,8 +2500,8 @@ var SilverGriffon;
     SilverGriffon.Tile = Tile;
     var WallTile = /** @class */ (function (_super) {
         __extends(WallTile, _super);
-        function WallTile(themeElement) {
-            return _super.call(this, themeElement) || this;
+        function WallTile(themeElement, x, y) {
+            return _super.call(this, themeElement, x, y) || this;
         }
         Object.defineProperty(WallTile.prototype, "passible", {
             get: function () {
@@ -2435,8 +2515,8 @@ var SilverGriffon;
     SilverGriffon.WallTile = WallTile;
     var FloorTile = /** @class */ (function (_super) {
         __extends(FloorTile, _super);
-        function FloorTile(themeElement) {
-            return _super.call(this, themeElement) || this;
+        function FloorTile(themeElement, x, y) {
+            return _super.call(this, themeElement, x, y) || this;
         }
         Object.defineProperty(FloorTile.prototype, "passible", {
             get: function () {

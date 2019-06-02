@@ -16,7 +16,7 @@ namespace SilverGriffon {
 
             engine.pushElement(new RoomElement(this._environment));
 
-            engine.pushElement(new GridElement());
+            //engine.pushElement(new GridElement());
         }
         
     }

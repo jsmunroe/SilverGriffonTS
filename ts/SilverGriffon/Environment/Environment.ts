@@ -11,8 +11,8 @@ namespace SilverGriffon {
         get currentRoom() :Room { return this._currentRoom || this.createRoom(); }        
 
         private createPlayer() :Character {
-            this._player = new Character(this, Config.characters.player, new Vector(1, 1));
-            this._player.controller = new PlayerController();
+            this._player = new Character(this, Config.characters.player, new Vector(60, 60));
+            this._player.controller = new PlayerController(this);
             return this._player;
         }
 
@@ -28,11 +28,11 @@ namespace SilverGriffon {
         updateCamera(context: Lightspeed.FrameRenderContext) {
             context.ctx.imageSmoothingEnabled = false
 
-            var scaleFactor = 1.5;
+            var scaleFactor = Config.playerZoom;
             var scale = new Vector(scaleFactor, scaleFactor);
             var translate = new Vector(
-                context.canvasWidth / (2 * scaleFactor) - this.player.position.x * Config.tileSize - Config.tileSize / 2,
-                context.canvasHeight / (2 * scaleFactor) - this.player.position.y * Config.tileSize - Config.tileSize / 2
+                context.canvasWidth / (2 * scaleFactor) - this.player.position.x,
+                context.canvasHeight / (2 * scaleFactor) - this.player.position.y
             );;
 
             context.ctx.scale(scale.x, scale.y);

@@ -30,11 +30,11 @@ namespace Lightspeed {
         }
 
         get right() {
-            return this._left + this._width - 1;
+            return this._left + this._width;
         }
 
         get bottom() {
-            return this._top + this._height - 1;
+            return this._top + this._height;
         }
 
         get size() :Size {
