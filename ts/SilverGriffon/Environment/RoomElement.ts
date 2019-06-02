@@ -13,7 +13,12 @@ namespace SilverGriffon {
         }
 
         update(context: Lightspeed.FrameUpdateContext): void {
-        
+            var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
+            for (let i = 0; i < characters.length; i++) {
+                const character = characters[i];
+                
+                character.update(context);
+            }
         }
 
         render(context: Lightspeed.FrameRenderContext): void {

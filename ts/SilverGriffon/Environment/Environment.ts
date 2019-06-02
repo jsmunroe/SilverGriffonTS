@@ -12,6 +12,7 @@ namespace SilverGriffon {
 
         private createPlayer() :Character {
             this._player = new Character(this, Config.characters.player, new Vector(1, 1));
+            this._player.controller = new PlayerController();
             return this._player;
         }
 
@@ -30,8 +31,8 @@ namespace SilverGriffon {
             var scaleFactor = 1.5;
             var scale = new Vector(scaleFactor, scaleFactor);
             var translate = new Vector(
-                context.canvasWidth / (2 * scaleFactor) - this.player.locationInRoom.x * Config.tileSize - Config.tileSize / 2,
-                context.canvasHeight / (2 * scaleFactor) - this.player.locationInRoom.y * Config.tileSize - Config.tileSize / 2
+                context.canvasWidth / (2 * scaleFactor) - this.player.position.x * Config.tileSize - Config.tileSize / 2,
+                context.canvasHeight / (2 * scaleFactor) - this.player.position.y * Config.tileSize - Config.tileSize / 2
             );;
 
             context.ctx.scale(scale.x, scale.y);

@@ -2076,6 +2076,32 @@ var SilverGriffon;
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {
+    var PlayerController = /** @class */ (function () {
+        function PlayerController() {
+        }
+        PlayerController.prototype.update = function (character, context) {
+            var keys = Config.keys;
+            var direction = new Vector(0, 0);
+            if (Keyboard.Current.keys(keys.moveUp)) {
+                direction = direction.withY(function (y) { return -1; });
+            }
+            if (Keyboard.Current.keys(keys.moveDown)) {
+                direction = direction.withY(function (y) { return 1; });
+            }
+            if (Keyboard.Current.keys(keys.moveLeft)) {
+                direction = direction.withX(function (y) { return -1; });
+            }
+            if (Keyboard.Current.keys(keys.moveRight)) {
+                direction = direction.withX(function (y) { return 1; });
+            }
+            character.move(direction.normal);
+        };
+        return PlayerController;
+    }());
+    SilverGriffon.PlayerController = PlayerController;
+})(SilverGriffon || (SilverGriffon = {}));
+var SilverGriffon;
+(function (SilverGriffon) {
     var Environment = /** @class */ (function () {
         function Environment() {
             this._theme = new SilverGriffon.Theme(Config.theme);
@@ -2093,6 +2119,7 @@ var SilverGriffon;
         });
         Environment.prototype.createPlayer = function () {
             this._player = new SilverGriffon.Character(this, Config.characters.player, new Vector(1, 1));
+            this._player.controller = new SilverGriffon.PlayerController();
             return this._player;
         };
         Environment.prototype.createRoom = function () {
@@ -2106,7 +2133,7 @@ var SilverGriffon;
             context.ctx.imageSmoothingEnabled = false;
             var scaleFactor = 1.5;
             var scale = new Vector(scaleFactor, scaleFactor);
-            var translate = new Vector(context.canvasWidth / (2 * scaleFactor) - this.player.locationInRoom.x * Config.tileSize - Config.tileSize / 2, context.canvasHeight / (2 * scaleFactor) - this.player.locationInRoom.y * Config.tileSize - Config.tileSize / 2);
+            var translate = new Vector(context.canvasWidth / (2 * scaleFactor) - this.player.position.x * Config.tileSize - Config.tileSize / 2, context.canvasHeight / (2 * scaleFactor) - this.player.position.y * Config.tileSize - Config.tileSize / 2);
             ;
             context.ctx.scale(scale.x, scale.y);
             context.ctx.translate(translate.x, translate.y);
@@ -2148,6 +2175,11 @@ var SilverGriffon;
         RoomElement.prototype.init = function (context) {
         };
         RoomElement.prototype.update = function (context) {
+            var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
+            for (var i = 0; i < characters.length; i++) {
+                var character = characters[i];
+                character.update(context);
+            }
         };
         RoomElement.prototype.render = function (context) {
             this._environment.updateCamera(context);
@@ -2177,29 +2209,58 @@ var SilverGriffon;
 (function (SilverGriffon) {
     var Character = /** @class */ (function () {
         function Character(environment, config, locationInRoom) {
-            this._direction = Direction.East;
-            this._moving = true;
-            this._locationInRoom = new Vector();
+            this._speed = 0.05;
+            this._direction = Direction.South;
+            this._position = new Vector();
+            this._velocity = new Vector();
             this._environment = environment;
             this._sprite = new Sprite(config.spritePath, 48, 48, 12);
-            this._locationInRoom = locationInRoom || new Vector();
+            this._position = locationInRoom || new Vector();
         }
-        Object.defineProperty(Character.prototype, "locationInRoom", {
-            get: function () { return this._locationInRoom; },
+        Object.defineProperty(Character.prototype, "position", {
+            get: function () { return this._position; },
             enumerable: true,
             configurable: true
         });
+        Character.prototype.move = function (direction) {
+            direction = direction.normal;
+            this._velocity = direction.scale(this._speed);
+        };
+        Character.prototype.update = function (context) {
+            if (this.controller) {
+                this.controller.update(this, context);
+            }
+            this._position = this._position.add(this._velocity);
+        };
         Character.prototype.render = function (context) {
             var frameOffset = 1;
-            if (this._moving) {
-                frameOffset = context.getFrame(200, 4);
+            if (this.isMoving()) {
+                frameOffset = context.getFrame(150, 4);
                 if (frameOffset >= 3) {
                     frameOffset = 4 - frameOffset;
                 }
             }
-            var frame = this._direction * 3 + frameOffset;
-            var location = this._locationInRoom.add(new Vector(0.5, 0.5)).scale(Config.tileSize);
+            var frame = this.getDirection() * 3 + frameOffset;
+            var location = this._position.add(new Vector(0.5, 0.5)).scale(Config.tileSize);
             this._sprite.draw(context.ctx, location, frame);
+        };
+        Character.prototype.isMoving = function () {
+            return this._velocity.magnitude > 0;
+        };
+        Character.prototype.getDirection = function () {
+            if (this._velocity.x > 0) {
+                this._direction = Direction.East;
+            }
+            else if (this._velocity.x < 0) {
+                this._direction = Direction.West;
+            }
+            else if (this._velocity.y > 0) {
+                this._direction = Direction.South;
+            }
+            else if (this._velocity.y < 0) {
+                this._direction = Direction.North;
+            }
+            return this._direction;
         };
         return Character;
     }());
