@@ -15,15 +15,15 @@ namespace SilverGriffon {
                 direction = direction.withY(y => -1);
             }
 
-            else if (Keyboard.Current.keys(keys.moveDown)) {
+            if (Keyboard.Current.keys(keys.moveDown)) {
                 direction = direction.withY(y => 1);
             }
 
-            else if (Keyboard.Current.keys(keys.moveLeft)) {
+            if (Keyboard.Current.keys(keys.moveLeft)) {
                 direction = direction.withX(y => -1);
             }
 
-            else if (Keyboard.Current.keys(keys.moveRight)) {
+            if (Keyboard.Current.keys(keys.moveRight)) {
                 direction = direction.withX(y => 1);
             }
             
@@ -45,19 +45,19 @@ namespace SilverGriffon {
 
                 var centerDiff = characterBox.center.subtract(box.center);
 
-                if (direction.x > 0 && centerDiff.x < 0) {
+                if (direction.x > 0 && centerDiff.x < 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
                     offset = offset.withX(x => Math.min(x, box.left - characterBox.right));
                 }
 
-                if (direction.x < 0 && centerDiff.x > 0) {
+                if (direction.x < 0 && centerDiff.x > 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
                     offset = offset.withX(x => Math.max(x, box.right - characterBox.left));
                 }
 
-                if (direction.y > 0 && centerDiff.y < 0) {
+                if (direction.y > 0 && centerDiff.y < 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
                     offset = offset.withY(y => Math.min(y, box.top - characterBox.bottom));
                 }
 
-                if  (direction.y < 0 && centerDiff.y > 0) {
+                if  (direction.y < 0 && centerDiff.y > 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
                     offset = offset.withY(y => Math.max(y, box.bottom - characterBox.top));
                 }
             }

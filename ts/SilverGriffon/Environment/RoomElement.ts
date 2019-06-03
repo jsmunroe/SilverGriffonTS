@@ -35,7 +35,7 @@ namespace SilverGriffon {
                             continue;
                         }
     
-                        tile.sprite.draw(context.ctx, new Vector(x * Config.tileSize, y * Config.tileSize))
+                        tile.render(context);
 
                         // if (!tile.passible) {
                         //     let tileBox = tile.box;

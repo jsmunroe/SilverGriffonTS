@@ -19,6 +19,15 @@ namespace SilverGriffon {
             return this._themeElement.sprite;
         }
 
+        render(context: Lightspeed.FrameRenderContext) {
+            var frame : number = 0;
+            if (this.sprite.frameCount > 1) {
+                frame = context.getFrame(this._themeElement.frameLength, this.sprite.frameCount);
+            }
+
+            this.sprite.draw(context.ctx, new Vector(this.x * Config.tileSize, this.y * Config.tileSize), frame);
+        }
+
         abstract get passible() :boolean;
     }
 

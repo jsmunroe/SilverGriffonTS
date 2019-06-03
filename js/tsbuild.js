@@ -1944,7 +1944,7 @@ var DefaultTheme = {
     floor: [
         { id: 0x0001, sprite: './img/tiles/stone/floor00.png', freq: 1.0 },
         { id: 0x0002, sprite: './img/tiles/stone/floor01.png', freq: 0.015 },
-        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015 },
+        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015, frames: 8, frameLength: 250 },
         { id: 0x0004, sprite: './img/tiles/stone/floor03.png', freq: 0.015 },
         { id: 0x0005, sprite: './img/tiles/stone/floor04.png', freq: 0.015 },
         { id: 0x0006, sprite: './img/tiles/stone/floor05.png', freq: 0.015 },
@@ -2096,13 +2096,13 @@ var SilverGriffon;
             if (Keyboard.Current.keys(keys.moveUp)) {
                 direction = direction.withY(function (y) { return -1; });
             }
-            else if (Keyboard.Current.keys(keys.moveDown)) {
+            if (Keyboard.Current.keys(keys.moveDown)) {
                 direction = direction.withY(function (y) { return 1; });
             }
-            else if (Keyboard.Current.keys(keys.moveLeft)) {
+            if (Keyboard.Current.keys(keys.moveLeft)) {
                 direction = direction.withX(function (y) { return -1; });
             }
-            else if (Keyboard.Current.keys(keys.moveRight)) {
+            if (Keyboard.Current.keys(keys.moveRight)) {
                 direction = direction.withX(function (y) { return 1; });
             }
             character.move(direction.normal);
@@ -2118,16 +2118,16 @@ var SilverGriffon;
                 var tile = collidingTiles[i];
                 var box = tile.box;
                 centerDiff = characterBox.center.subtract(box.center);
-                if (direction.x > 0 && centerDiff.x < 0) {
+                if (direction.x > 0 && centerDiff.x < 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
                     offset = offset.withX(function (x) { return Math.min(x, box.left - characterBox.right); });
                 }
-                if (direction.x < 0 && centerDiff.x > 0) {
+                if (direction.x < 0 && centerDiff.x > 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
                     offset = offset.withX(function (x) { return Math.max(x, box.right - characterBox.left); });
                 }
-                if (direction.y > 0 && centerDiff.y < 0) {
+                if (direction.y > 0 && centerDiff.y < 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
                     offset = offset.withY(function (y) { return Math.min(y, box.top - characterBox.bottom); });
                 }
-                if (direction.y < 0 && centerDiff.y > 0) {
+                if (direction.y < 0 && centerDiff.y > 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
                     offset = offset.withY(function (y) { return Math.max(y, box.bottom - characterBox.top); });
                 }
             };
@@ -2232,7 +2232,7 @@ var SilverGriffon;
                         if (tile == null) {
                             continue;
                         }
-                        tile.sprite.draw(context.ctx, new Vector(x * Config.tileSize, y * Config.tileSize));
+                        tile.render(context);
                         // if (!tile.passible) {
                         //     let tileBox = tile.box;
                         //     context.ctx.strokeStyle = 'green';
@@ -2255,7 +2255,7 @@ var SilverGriffon;
 (function (SilverGriffon) {
     var Character = /** @class */ (function () {
         function Character(environment, config, position) {
-            this._speed = 2;
+            this._speed = 3;
             this._direction = Direction.South;
             this._position = new Vector();
             this._velocity = new Vector();
@@ -2427,9 +2427,10 @@ var SilverGriffon;
             this._freq = 1;
             this._type = type;
             this._id = themeElementConfig.id;
-            this._sprite = new Sprite(themeElementConfig.sprite, Config.tileSize, Config.tileSize);
+            this._sprite = new Sprite(themeElementConfig.sprite, Config.tileSize, Config.tileSize, themeElementConfig.frames);
             this._sprite.alignment = Alignment.topLeft;
             this._freq = themeElementConfig.freq;
+            this._frameLength = themeElementConfig.frameLength || 100;
         }
         Object.defineProperty(ThemeElement.prototype, "type", {
             get: function () {
@@ -2455,6 +2456,13 @@ var SilverGriffon;
         Object.defineProperty(ThemeElement.prototype, "frequency", {
             get: function () {
                 return this._freq;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(ThemeElement.prototype, "frameLength", {
+            get: function () {
+                return this._frameLength;
             },
             enumerable: true,
             configurable: true
@@ -2495,6 +2503,13 @@ var SilverGriffon;
             enumerable: true,
             configurable: true
         });
+        Tile.prototype.render = function (context) {
+            var frame = 0;
+            if (this.sprite.frameCount > 1) {
+                frame = context.getFrame(this._themeElement.frameLength, this.sprite.frameCount);
+            }
+            this.sprite.draw(context.ctx, new Vector(this.x * Config.tileSize, this.y * Config.tileSize), frame);
+        };
         return Tile;
     }());
     SilverGriffon.Tile = Tile;

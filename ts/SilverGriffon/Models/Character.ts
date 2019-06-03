@@ -3,7 +3,7 @@ namespace SilverGriffon {
         private _environment: Environment;
         private _sprite: Sprite;
 
-        private _speed: number = 2;
+        private _speed: number = 3;
 
         private _direction: Direction = Direction.South;
 

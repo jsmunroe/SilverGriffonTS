@@ -39,13 +39,15 @@ namespace SilverGriffon {
         private _id: number = 0;
         private _sprite: Sprite = null;
         private _freq: number = 1;
+        private _frameLength: number;
 
         constructor(type: string, themeElementConfig: any) {
             this._type = type;
             this._id = themeElementConfig.id;
-            this._sprite = new Sprite(themeElementConfig.sprite, Config.tileSize, Config.tileSize);
+            this._sprite = new Sprite(themeElementConfig.sprite, Config.tileSize, Config.tileSize, themeElementConfig.frames);
             this._sprite.alignment = Alignment.topLeft;
             this._freq = themeElementConfig.freq;
+            this._frameLength = themeElementConfig.frameLength || 100;
         }
 
         get type() :string {
@@ -62,6 +64,10 @@ namespace SilverGriffon {
 
         get frequency() :number {
             return this._freq;
-        }        
+        }
+
+        get frameLength() :number {
+            return this._frameLength;
+        }
     }
 }

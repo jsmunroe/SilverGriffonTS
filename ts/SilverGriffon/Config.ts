@@ -2,7 +2,7 @@ var DefaultTheme = {
     floor: [
         { id: 0x0001, sprite: './img/tiles/stone/floor00.png', freq: 1.0 },
         { id: 0x0002, sprite: './img/tiles/stone/floor01.png', freq: 0.015 },
-        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015 },
+        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015, frames: 8, frameLength: 250 },
         { id: 0x0004, sprite: './img/tiles/stone/floor03.png', freq: 0.015 },
         { id: 0x0005, sprite: './img/tiles/stone/floor04.png', freq: 0.015 },
         { id: 0x0006, sprite: './img/tiles/stone/floor05.png', freq: 0.015 },
