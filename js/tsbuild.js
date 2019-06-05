@@ -1982,7 +1982,14 @@ var Config = {
     theme: DefaultTheme,
     characters: {
         player: {
-            spritePath: './img/characters/player/player.png'
+            spritePath: './img/characters/player/player.png',
+            speed: 150,
+        },
+        sewer: {
+            rat: {
+                spritePath: './img/characters/sewer/rat.png',
+                speed: 100,
+            }
         }
     }
 };
@@ -2078,6 +2085,12 @@ var SilverGriffon;
             engine.unpause();
             engine.pushElement(new SilverGriffon.Background());
             engine.pushElement(new SilverGriffon.RoomElement(this._environment));
+            engine.pushElement(this._environment.player);
+            var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
+            for (var i = 0; i < characters.length; i++) {
+                var character = characters[i];
+                engine.pushElement(character);
+            }
             //engine.pushElement(new GridElement());
         };
         return RoomFlow;
@@ -2086,9 +2099,48 @@ var SilverGriffon;
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {
-    var PlayerController = /** @class */ (function () {
-        function PlayerController(environment) {
+    var ControllerBase = /** @class */ (function () {
+        function ControllerBase(environment) {
             this._environment = environment;
+        }
+        ControllerBase.prototype.checkCollisions = function (character, direction) {
+            var characterBox = character.box;
+            var impassibleTiles = this._environment.currentRoom.allTiles.filter(function (t) { return !t.passible; });
+            var collidingTiles = impassibleTiles.filter(function (t) { return t.box.collides(characterBox); });
+            var offset = new Vector();
+            var _loop_2 = function (i) {
+                var tile = collidingTiles[i];
+                var tileBox = tile.box;
+                centerDiff = characterBox.center.subtract(tileBox.center);
+                if (direction.x > 0 && centerDiff.x < 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
+                    offset = offset.withX(function (x) { return Math.min(x, tileBox.left - characterBox.right); });
+                }
+                if (direction.x < 0 && centerDiff.x > 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
+                    offset = offset.withX(function (x) { return Math.max(x, tileBox.right - characterBox.left); });
+                }
+                if (direction.y > 0 && centerDiff.y < 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
+                    offset = offset.withY(function (y) { return Math.min(y, tileBox.top - characterBox.bottom); });
+                }
+                if (direction.y < 0 && centerDiff.y > 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
+                    offset = offset.withY(function (y) { return Math.max(y, tileBox.bottom - characterBox.top); });
+                }
+            };
+            var centerDiff;
+            for (var i = 0; i < collidingTiles.length; i++) {
+                _loop_2(i);
+            }
+            return offset;
+        };
+        return ControllerBase;
+    }());
+    SilverGriffon.ControllerBase = ControllerBase;
+})(SilverGriffon || (SilverGriffon = {}));
+var SilverGriffon;
+(function (SilverGriffon) {
+    var PlayerController = /** @class */ (function (_super) {
+        __extends(PlayerController, _super);
+        function PlayerController(environment) {
+            return _super.call(this, environment) || this;
         }
         PlayerController.prototype.update = function (character, context) {
             var keys = Config.keys;
@@ -2109,37 +2161,27 @@ var SilverGriffon;
             var offset = this.checkCollisions(character, direction);
             character.offset(offset);
         };
-        PlayerController.prototype.checkCollisions = function (character, direction) {
-            var characterBox = character.box;
-            var impassibleTiles = this._environment.currentRoom.allTiles.filter(function (t) { return !t.passible; });
-            var collidingTiles = impassibleTiles.filter(function (t) { return t.box.collides(characterBox); });
-            var offset = new Vector();
-            var _loop_2 = function (i) {
-                var tile = collidingTiles[i];
-                var box = tile.box;
-                centerDiff = characterBox.center.subtract(box.center);
-                if (direction.x > 0 && centerDiff.x < 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
-                    offset = offset.withX(function (x) { return Math.min(x, box.left - characterBox.right); });
-                }
-                if (direction.x < 0 && centerDiff.x > 0 && Math.abs(centerDiff.x) > Math.abs(centerDiff.y)) {
-                    offset = offset.withX(function (x) { return Math.max(x, box.right - characterBox.left); });
-                }
-                if (direction.y > 0 && centerDiff.y < 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
-                    offset = offset.withY(function (y) { return Math.min(y, box.top - characterBox.bottom); });
-                }
-                if (direction.y < 0 && centerDiff.y > 0 && Math.abs(centerDiff.y) > Math.abs(centerDiff.x)) {
-                    offset = offset.withY(function (y) { return Math.max(y, box.bottom - characterBox.top); });
-                }
-            };
-            var centerDiff;
-            for (var i = 0; i < collidingTiles.length; i++) {
-                _loop_2(i);
-            }
-            return offset;
-        };
         return PlayerController;
-    }());
+    }(SilverGriffon.ControllerBase));
     SilverGriffon.PlayerController = PlayerController;
+})(SilverGriffon || (SilverGriffon = {}));
+var SilverGriffon;
+(function (SilverGriffon) {
+    var RandomController = /** @class */ (function (_super) {
+        __extends(RandomController, _super);
+        function RandomController(environment) {
+            return _super.call(this, environment) || this;
+        }
+        RandomController.prototype.update = function (character, context) {
+            var keys = Config.keys;
+            var direction = new Vector(Random.Current.getBetween(-1, 1), Random.Current.getBetween(-1, 1));
+            character.acceleration = new Vector(Random.Current.getBetween(-1, 1), Random.Current.getBetween(-1, 1));
+            var offset = this.checkCollisions(character, direction);
+            character.offset(offset);
+        };
+        return RandomController;
+    }(SilverGriffon.ControllerBase));
+    SilverGriffon.RandomController = RandomController;
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {
@@ -2159,7 +2201,7 @@ var SilverGriffon;
             configurable: true
         });
         Environment.prototype.createPlayer = function () {
-            this._player = new SilverGriffon.Character(this, Config.characters.player, new Vector(60, 60));
+            this._player = new SilverGriffon.Character(this, Config.characters.player, new Vector(1.5 * Config.tileSize, 1.5 * Config.tileSize));
             this._player.controller = new SilverGriffon.PlayerController(this);
             return this._player;
         };
@@ -2168,7 +2210,13 @@ var SilverGriffon;
             return this._currentRoom;
         };
         Environment.prototype.getCharactersInRoom = function (room) {
-            return room.characters.concat([this.player]);
+            var livingCharacters = room.characters.filter(function (c) { return !c.isDead; });
+            if (!livingCharacters.length) {
+                var character = new SilverGriffon.Character(this, Config.characters.sewer.rat, new Vector(4.5 * Config.tileSize, 4.5 * Config.tileSize));
+                character.controller = new SilverGriffon.RandomController(this);
+                room.characters.push(character);
+            }
+            return room.characters;
         };
         Environment.prototype.updateCamera = function (context) {
             context.ctx.imageSmoothingEnabled = false;
@@ -2213,8 +2261,6 @@ var SilverGriffon;
             _this._environment = environment;
             return _this;
         }
-        RoomElement.prototype.init = function (context) {
-        };
         RoomElement.prototype.update = function (context) {
             var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
             for (var i = 0; i < characters.length; i++) {
@@ -2240,11 +2286,6 @@ var SilverGriffon;
                         // }
                     }
                 }
-                var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
-                for (var i = 0; i < characters.length; i++) {
-                    var character = characters[i];
-                    character.render(context);
-                }
             }
         };
         return RoomElement;
@@ -2253,40 +2294,38 @@ var SilverGriffon;
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {
-    var Character = /** @class */ (function () {
+    var Character = /** @class */ (function (_super) {
+        __extends(Character, _super);
         function Character(environment, config, position) {
-            this._speed = 3;
-            this._direction = Direction.South;
-            this._position = new Vector();
-            this._velocity = new Vector();
-            this._environment = environment;
-            this._sprite = new Sprite(config.spritePath, 32, 32, 12);
-            this._position = position || new Vector();
+            var _this = _super.call(this) || this;
+            _this._speed = 3;
+            _this._direction = Direction.South;
+            _this._environment = environment;
+            _this._sprite = new Sprite(config.spritePath, 32, 32, 12);
+            _this.position = position || new Vector();
+            _this._speed = config.speed || 2;
+            return _this;
         }
-        Object.defineProperty(Character.prototype, "position", {
-            get: function () { return this._position; },
-            enumerable: true,
-            configurable: true
-        });
         Object.defineProperty(Character.prototype, "box", {
-            get: function () { return new Box(this._position.x - 10, this._position.y, 20, 16); },
+            get: function () { return new Box(this.position.x - 10, this.position.y - 4, 20, 20); },
             enumerable: true,
             configurable: true
         });
         Character.prototype.move = function (direction) {
             direction = direction.normal;
-            this._velocity = direction.scale(this._speed);
-            this._position = this._position.add(this._velocity);
+            this.velocity = direction.scale(this._speed);
         };
         Character.prototype.offset = function (offset) {
-            this._position = this._position.add(offset);
+            this.position = this.position.add(offset);
         };
         Character.prototype.update = function (context) {
             if (this.controller) {
                 this.controller.update(this, context);
             }
+            _super.prototype.update.call(this, context);
         };
         Character.prototype.render = function (context) {
+            this._environment.updateCamera(context);
             var frameOffset = 1;
             if (this.isMoving()) {
                 frameOffset = context.getFrame(150, 4);
@@ -2296,30 +2335,30 @@ var SilverGriffon;
             }
             var frame = this.getDirection() * 3 + frameOffset;
             ;
-            this._sprite.draw(context.ctx, this._position, frame);
+            this._sprite.draw(context.ctx, this.position, frame);
             // context.ctx.strokeStyle = 'blue';
             // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);
         };
         Character.prototype.isMoving = function () {
-            return this._velocity.magnitude > 0;
+            return this.velocity.magnitude > 0;
         };
         Character.prototype.getDirection = function () {
-            if (this._velocity.x > 0) {
+            if (this.velocity.x > 0) {
                 this._direction = Direction.East;
             }
-            else if (this._velocity.x < 0) {
+            else if (this.velocity.x < 0) {
                 this._direction = Direction.West;
             }
-            else if (this._velocity.y > 0) {
+            else if (this.velocity.y > 0) {
                 this._direction = Direction.South;
             }
-            else if (this._velocity.y < 0) {
+            else if (this.velocity.y < 0) {
                 this._direction = Direction.North;
             }
             return this._direction;
         };
         return Character;
-    }());
+    }(Lightspeed.InertialElement));
     SilverGriffon.Character = Character;
     var Direction;
     (function (Direction) {

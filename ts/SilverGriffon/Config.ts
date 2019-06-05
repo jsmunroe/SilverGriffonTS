@@ -41,7 +41,14 @@ var Config = {
     theme: DefaultTheme,
     characters: {
         player: {
-            spritePath: './img/characters/player/player.png'
+            spritePath: './img/characters/player/player.png',
+            speed: 150,
+        },
+        sewer: {
+            rat: {
+                spritePath: './img/characters/sewer/rat.png',
+                speed: 100,
+            }
         }
     }
 };

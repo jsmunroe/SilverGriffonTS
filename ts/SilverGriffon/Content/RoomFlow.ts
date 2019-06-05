@@ -16,6 +16,16 @@ namespace SilverGriffon {
 
             engine.pushElement(new RoomElement(this._environment));
 
+            engine.pushElement(this._environment.player);
+
+            var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
+            for (let i = 0; i < characters.length; i++) {
+                const character = characters[i];
+                
+                engine.pushElement(character);
+            }
+            
+
             //engine.pushElement(new GridElement());
         }
         

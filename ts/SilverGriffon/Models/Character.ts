@@ -1,5 +1,5 @@
 namespace SilverGriffon {
-    export class Character {
+    export class Character extends Lightspeed.InertialElement{
         private _environment: Environment;
         private _sprite: Sprite;
 
@@ -7,39 +7,40 @@ namespace SilverGriffon {
 
         private _direction: Direction = Direction.South;
 
-        private _position: Vector = new Vector();
-        private _velocity: Vector = new Vector();
-
         controller: IController;
 
-        get position() { return this._position; }
-
-        get box() { return new Box(this._position.x - 10, this._position.y, 20, 16); }
+        get box() { return new Box(this.position.x - 10, this.position.y - 4, 20, 20); }
 
         constructor(environment: Environment, config: any, position?: Vector) {
+            super();
+
             this._environment = environment;
             this._sprite = new Sprite(config.spritePath, 32, 32, 12);
-            this._position = position || new Vector();
+            this.position = position || new Vector();
+            this._speed = config.speed || 2;
         }
 
         move(direction: Vector) {
             direction = direction.normal;
 
-            this._velocity = direction.scale(this._speed);
-            this._position = this._position.add(this._velocity);
+            this.velocity = direction.scale(this._speed);
         }
 
         offset(offset: Vector) {
-            this._position = this._position.add(offset);
+            this.position = this.position.add(offset);
         }
 
         update(context: Lightspeed.FrameUpdateContext): void {
             if (this.controller) {
                 this.controller.update(this, context);
             }
+
+            super.update(context);
         }
 
         render(context: Lightspeed.FrameRenderContext): void {
+            this._environment.updateCamera(context);
+
             var frameOffset = 1;
             
             if (this.isMoving()) {
@@ -52,27 +53,27 @@ namespace SilverGriffon {
             
             var frame = this.getDirection() * 3 + frameOffset;;
 
-            this._sprite.draw(context.ctx, this._position, frame);
+            this._sprite.draw(context.ctx, this.position, frame);
 
             // context.ctx.strokeStyle = 'blue';
             // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);
         }
 
         private isMoving(): boolean {
-            return this._velocity.magnitude > 0;
+            return this.velocity.magnitude > 0;
         }
 
         private getDirection(): Direction {
-            if (this._velocity.x > 0) {
+            if (this.velocity.x > 0) {
                 this._direction = Direction.East;
                 
-            } else if (this._velocity.x < 0) {
+            } else if (this.velocity.x < 0) {
                 this._direction = Direction.West;
 
-            } else if (this._velocity.y > 0) {
+            } else if (this.velocity.y > 0) {
                 this._direction = Direction.South;
 
-            } else if (this._velocity.y < 0) {
+            } else if (this.velocity.y < 0) {
                 this._direction = Direction.North;
             }
 

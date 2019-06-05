@@ -8,10 +8,6 @@ namespace SilverGriffon {
             this._environment = environment;
         }
 
-        init(context: Lightspeed.ElementInitContext) : void {
-
-        }
-
         update(context: Lightspeed.FrameUpdateContext): void {
             var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
             for (let i = 0; i < characters.length; i++) {
@@ -44,13 +40,6 @@ namespace SilverGriffon {
                         //     context.ctx.strokeRect(tileBox.left, tileBox.top, tileBox.width, tileBox.height);
                         // }
                     }
-                }
-
-                var characters = this._environment.getCharactersInRoom(this._environment.currentRoom);
-                for (let i = 0; i < characters.length; i++) {
-                    const character = characters[i];
-                    
-                    character.render(context);
                 }
             }
         }

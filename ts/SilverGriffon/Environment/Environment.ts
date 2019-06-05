@@ -11,7 +11,7 @@ namespace SilverGriffon {
         get currentRoom() :Room { return this._currentRoom || this.createRoom(); }        
 
         private createPlayer() :Character {
-            this._player = new Character(this, Config.characters.player, new Vector(60, 60));
+            this._player = new Character(this, Config.characters.player, new Vector(1.5 * Config.tileSize, 1.5 * Config.tileSize));
             this._player.controller = new PlayerController(this);
             return this._player;
         }
@@ -22,7 +22,14 @@ namespace SilverGriffon {
         }
 
         getCharactersInRoom(room: Room) :Character[] {
-            return room.characters.concat([this.player]);
+            var livingCharacters = room.characters.filter(c => !c.isDead);
+            if (!livingCharacters.length) {
+                var character = new Character(this, Config.characters.sewer.rat, new Vector(4.5 * Config.tileSize, 4.5 * Config.tileSize));
+                character.controller = new RandomController(this);
+                room.characters.push(character);
+            }
+
+            return room.characters;
         }
 
         updateCamera(context: Lightspeed.FrameRenderContext) {
