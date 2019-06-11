@@ -1,15 +1,9 @@
 var DefaultTheme = {
     floor: [
-        { id: 0x0001, sprite: './img/tiles/stone/floor00.png', freq: 1.0 },
-        { id: 0x0002, sprite: './img/tiles/stone/floor01.png', freq: 0.015 },
-        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015, frames: 8, frameLength: 250 },
-        { id: 0x0004, sprite: './img/tiles/stone/floor03.png', freq: 0.015 },
-        { id: 0x0005, sprite: './img/tiles/stone/floor04.png', freq: 0.015 },
-        { id: 0x0006, sprite: './img/tiles/stone/floor05.png', freq: 0.015 },
-        { id: 0x0007, sprite: './img/tiles/stone/floor06.png', freq: 0.015 }
+        { id: 0x0001, sprite: './img/tilesets/stone/floor.gray.png', connect: true }
     ],
     wall: [
-        { id: 0x0010, sprite: './img/tiles/stone/wall00.png' }
+        { id: 0x0010, sprite: './img/tilesets/stone/wall.gray.png', connect: true }
     ],
     upStair: [
         { id: 0x0020, sprite: './img/tiles/stone/upstair.png' }
@@ -36,7 +30,7 @@ var Config = {
         moveRight: ['ArrowRight', 'KeyD'],
         pause: ['Escape']
     },
-    tileSize: 40,
+    tileSize: 48,
     playerZoom: 2,
     theme: DefaultTheme,
     characters: {

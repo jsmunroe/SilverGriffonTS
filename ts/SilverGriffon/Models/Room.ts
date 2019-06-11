@@ -25,28 +25,28 @@ namespace SilverGriffon {
         get characters() :Character[] { return this._characters; }
 
         setTile(x: number, y: number, tile: Tile) {
+            if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
+                return;
+            }
+
             var index = y * this._width + x;
 
             if (index !== Math.floor(index)) {
                 throw `Coordinates (${x}, ${y}) are not integer values.`
             }
-
-            if (index < 0 || index >= this._tiles.length) {
-                throw `Coordinates (${x}, ${y}) are out of range.`;
-            }
-
+            
             this._tiles[index] = tile;
         }
 
         getTile(x: number, y: number) :Tile {
+            if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
+                return null;
+            }
+
             var index = y * this._width + x;
 
             if (index !== Math.floor(index)) {
                 throw `Coordinates (${x}, ${y}) are not integer values.`
-            }
-
-            if (index < 0 || index >= this._tiles.length) {
-                throw `Coordinates (${x}, ${y}) are out of range.`;
             }
 
             return this._tiles[index];

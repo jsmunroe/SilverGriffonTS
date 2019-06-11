@@ -1040,6 +1040,12 @@ var Lightspeed;
 })(Lightspeed || (Lightspeed = {}));
 var Lightspeed;
 (function (Lightspeed) {
+    var SpritGrid = /** @class */ (function () {
+        function SpritGrid(imagePath, width, height, segmentsX, segmentsY) {
+        }
+        return SpritGrid;
+    }());
+    Lightspeed.SpritGrid = SpritGrid;
     var Sprite = /** @class */ (function () {
         function Sprite(imagePath, width, height, frameCount) {
             var _this = this;
@@ -1095,7 +1101,7 @@ var Lightspeed;
             }
             this._onLoadCallbacks.push(callback);
         };
-        Sprite.prototype.draw = function (ctx, position, frame) {
+        Sprite.prototype.draw = function (ctx, position, size, frame) {
             if (!this._isLoaded) {
                 return;
             }
@@ -1105,6 +1111,17 @@ var Lightspeed;
             var drawBox = Lightspeed.Box.fromLocationAndSize(position, new Lightspeed.Size(this.width, this.height), this.alignment);
             ctx.globalAlpha = this.opacity;
             ctx.drawImage(this._image, frame * sourceFrameWidth, 0, sourceFrameWidth, this._image.height, drawBox.left, drawBox.top, drawBox.width, drawBox.height);
+            ctx.restore();
+        };
+        Sprite.prototype.drawPart = function (ctx, sourcePosition, sourceSize, destPosition, destSize) {
+            if (!this._isLoaded) {
+                return;
+            }
+            ctx.save();
+            var sourceBox = Lightspeed.Box.fromLocationAndSize(sourcePosition, sourceSize);
+            var destBox = Lightspeed.Box.fromLocationAndSize(destPosition, destSize, this.alignment);
+            ctx.globalAlpha = this.opacity;
+            ctx.drawImage(this._image, sourceBox.left, sourceBox.top, sourceBox.width, sourceBox.height, destBox.left, destBox.top, destBox.width, destBox.height);
             ctx.restore();
         };
         return Sprite;
@@ -1161,6 +1178,9 @@ var Lightspeed;
         };
         Vector.prototype.scale = function (scalar) {
             return new Vector(this.x * scalar, this.y * scalar);
+        };
+        Vector.prototype.offset = function (x, y) {
+            return new Vector(this.x + x, this.y + (y || x));
         };
         Vector.prototype.dot = function (other) {
             return this.x * other.x + this.y * other.y;
@@ -1942,16 +1962,10 @@ var Lightspeed;
 })(Lightspeed || (Lightspeed = {}));
 var DefaultTheme = {
     floor: [
-        { id: 0x0001, sprite: './img/tiles/stone/floor00.png', freq: 1.0 },
-        { id: 0x0002, sprite: './img/tiles/stone/floor01.png', freq: 0.015 },
-        { id: 0x0003, sprite: './img/tiles/stone/floor02.png', freq: 0.015, frames: 8, frameLength: 250 },
-        { id: 0x0004, sprite: './img/tiles/stone/floor03.png', freq: 0.015 },
-        { id: 0x0005, sprite: './img/tiles/stone/floor04.png', freq: 0.015 },
-        { id: 0x0006, sprite: './img/tiles/stone/floor05.png', freq: 0.015 },
-        { id: 0x0007, sprite: './img/tiles/stone/floor06.png', freq: 0.015 }
+        { id: 0x0001, sprite: './img/tilesets/stone/floor.gray.png', connect: true }
     ],
     wall: [
-        { id: 0x0010, sprite: './img/tiles/stone/wall00.png' }
+        { id: 0x0010, sprite: './img/tilesets/stone/wall.gray.png', connect: true }
     ],
     upStair: [
         { id: 0x0020, sprite: './img/tiles/stone/upstair.png' }
@@ -1977,7 +1991,7 @@ var Config = {
         moveRight: ['ArrowRight', 'KeyD'],
         pause: ['Escape']
     },
-    tileSize: 40,
+    tileSize: 48,
     playerZoom: 2,
     theme: DefaultTheme,
     characters: {
@@ -2050,6 +2064,9 @@ var SilverGriffon;
             });
             return room;
         };
+        RoomBuilder.prototype.setWall = function (room, theme, x, y) {
+            room.setTile(x, y, new SilverGriffon.WallTile(theme.pickWall(), x, y));
+        };
         RoomBuilder.prototype.fillRect = function (room, rect, pickTile) {
             for (var y = rect.top; y < rect.bottom; y++) {
                 for (var x = rect.left; x < rect.right; x++) {
@@ -2091,6 +2108,7 @@ var SilverGriffon;
                 var character = characters[i];
                 engine.pushElement(character);
             }
+            engine.pushElement(new SilverGriffon.FPSElement());
             //engine.pushElement(new GridElement());
         };
         return RoomFlow;
@@ -2233,6 +2251,35 @@ var SilverGriffon;
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {
+    var FPSElement = /** @class */ (function (_super) {
+        __extends(FPSElement, _super);
+        function FPSElement() {
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this._fps = -1;
+            _this._frameCount = 0;
+            _this._frameElapsed = 0;
+            return _this;
+        }
+        FPSElement.prototype.update = function (context) {
+            this._frameCount++;
+            this._frameElapsed += context.delta;
+            if (this._frameElapsed > 1) {
+                this._fps = this._frameCount / this._frameElapsed;
+                this._frameCount = 0;
+                this._frameElapsed = 0;
+            }
+        };
+        FPSElement.prototype.render = function (context) {
+            context.ctx.fillStyle = 'limegreen';
+            context.ctx.font = 'bold 24px consolas';
+            context.ctx.fillText("" + this._fps, 5, 26);
+        };
+        return FPSElement;
+    }(LsElement));
+    SilverGriffon.FPSElement = FPSElement;
+})(SilverGriffon || (SilverGriffon = {}));
+var SilverGriffon;
+(function (SilverGriffon) {
     var GridElement = /** @class */ (function (_super) {
         __extends(GridElement, _super);
         function GridElement() {
@@ -2278,7 +2325,7 @@ var SilverGriffon;
                         if (tile == null) {
                             continue;
                         }
-                        tile.render(context);
+                        tile.render(context, room);
                         // if (!tile.passible) {
                         //     let tileBox = tile.box;
                         //     context.ctx.strokeStyle = 'green';
@@ -2335,7 +2382,7 @@ var SilverGriffon;
             }
             var frame = this.getDirection() * 3 + frameOffset;
             ;
-            this._sprite.draw(context.ctx, this.position, frame);
+            this._sprite.draw(context.ctx, this.position, null, frame);
             // context.ctx.strokeStyle = 'blue';
             // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);
         };
@@ -2403,22 +2450,22 @@ var SilverGriffon;
             configurable: true
         });
         Room.prototype.setTile = function (x, y, tile) {
+            if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
+                return;
+            }
             var index = y * this._width + x;
             if (index !== Math.floor(index)) {
                 throw "Coordinates (" + x + ", " + y + ") are not integer values.";
-            }
-            if (index < 0 || index >= this._tiles.length) {
-                throw "Coordinates (" + x + ", " + y + ") are out of range.";
             }
             this._tiles[index] = tile;
         };
         Room.prototype.getTile = function (x, y) {
+            if (x < 0 || x >= this._width || y < 0 || y >= this._height) {
+                return null;
+            }
             var index = y * this._width + x;
             if (index !== Math.floor(index)) {
                 throw "Coordinates (" + x + ", " + y + ") are not integer values.";
-            }
-            if (index < 0 || index >= this._tiles.length) {
-                throw "Coordinates (" + x + ", " + y + ") are out of range.";
             }
             return this._tiles[index];
         };
@@ -2470,6 +2517,7 @@ var SilverGriffon;
             this._sprite.alignment = Alignment.topLeft;
             this._freq = themeElementConfig.freq;
             this._frameLength = themeElementConfig.frameLength || 100;
+            this._connects = themeElementConfig.connect;
         }
         Object.defineProperty(ThemeElement.prototype, "type", {
             get: function () {
@@ -2506,6 +2554,13 @@ var SilverGriffon;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(ThemeElement.prototype, "connects", {
+            get: function () {
+                return this._connects;
+            },
+            enumerable: true,
+            configurable: true
+        });
         return ThemeElement;
     }());
     SilverGriffon.ThemeElement = ThemeElement;
@@ -2516,10 +2571,16 @@ var SilverGriffon;
         function Tile(themeElement, x, y) {
             this._x = 0;
             this._y = 0;
+            this._id = themeElement.id;
             this._themeElement = themeElement;
             this._x = x;
             this._y = y;
         }
+        Object.defineProperty(Tile.prototype, "id", {
+            get: function () { return this._id; },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Tile.prototype, "x", {
             get: function () { return this._x; },
             enumerable: true,
@@ -2542,12 +2603,158 @@ var SilverGriffon;
             enumerable: true,
             configurable: true
         });
-        Tile.prototype.render = function (context) {
-            var frame = 0;
-            if (this.sprite.frameCount > 1) {
-                frame = context.getFrame(this._themeElement.frameLength, this.sprite.frameCount);
+        Tile.prototype.render = function (context, room) {
+            this.renderPart(context, room, TilePart.TopLeft);
+            this.renderPart(context, room, TilePart.Top);
+            this.renderPart(context, room, TilePart.TopRight);
+            this.renderPart(context, room, TilePart.Left);
+            this.renderPart(context, room, TilePart.Center);
+            this.renderPart(context, room, TilePart.Right);
+            this.renderPart(context, room, TilePart.BottomLeft);
+            this.renderPart(context, room, TilePart.Bottom);
+            this.renderPart(context, room, TilePart.BottomRight);
+        };
+        Tile.prototype.renderPart = function (context, room, part) {
+            var connectedPart = this.getConnectedPart(part, room);
+            var sourcePosition = this.getPartPositionIndex(connectedPart).scale(16);
+            var destPosition = new Vector(this.x, this.y).scale(Config.tileSize).add(this.getPartPositionIndex(part).scale(16));
+            var partSize = new Size(16, 16);
+            var dest = Box.fromLocationAndSize(destPosition, partSize).inflate(0.25);
+            this.sprite.drawPart(context.ctx, sourcePosition, partSize, dest.position, dest.size);
+        };
+        Tile.prototype.getConnectedPart = function (part, room) {
+            var northWest = (this.getTileId(room, this.x - 1, this.y - 1) === this.id);
+            var north = (this.getTileId(room, this.x + 0, this.y - 1) === this.id);
+            var northEast = (this.getTileId(room, this.x + 1, this.y - 1) === this.id);
+            var west = (this.getTileId(room, this.x - 1, this.y + 0) === this.id);
+            var east = (this.getTileId(room, this.x + 1, this.y + 0) === this.id);
+            var southWest = (this.getTileId(room, this.x - 1, this.y + 1) === this.id);
+            var south = (this.getTileId(room, this.x + 0, this.y + 1) === this.id);
+            var southEast = (this.getTileId(room, this.x + 1, this.y + 1) === this.id);
+            switch (part) {
+                default:
+                    return TilePart.Center;
+                case TilePart.TopLeft:
+                    if (!west && !northWest && !north)
+                        return TilePart.TopLeft;
+                    if (west && !northWest && !north)
+                        return TilePart.Top;
+                    if (!west && northWest && !north)
+                        return TilePart.TopLeft;
+                    if (west && northWest && !north)
+                        return TilePart.Top;
+                    if (!west && !northWest && north)
+                        return TilePart.Left;
+                    if (west && !northWest && north)
+                        return TilePart.ConvexBottomRight;
+                    if (!west && northWest && north)
+                        return TilePart.Left;
+                    return TilePart.Center;
+                case TilePart.Top:
+                    if (!north)
+                        return TilePart.Top;
+                    return TilePart.Center;
+                case TilePart.TopRight:
+                    if (!east && !northEast && !north)
+                        return TilePart.TopRight;
+                    if (east && !northEast && !north)
+                        return TilePart.Top;
+                    if (!east && northEast && !north)
+                        return TilePart.TopRight;
+                    if (east && northEast && !north)
+                        return TilePart.Top;
+                    if (!east && !northEast && north)
+                        return TilePart.Right;
+                    if (east && !northEast && north)
+                        return TilePart.ConvexBottomLeft;
+                    if (!east && northEast && north)
+                        return TilePart.Right;
+                    return TilePart.Center;
+                case TilePart.Left:
+                    if (!west)
+                        return TilePart.Left;
+                    return TilePart.Center;
+                case TilePart.Center:
+                    return TilePart.Center;
+                case TilePart.Right:
+                    if (!east)
+                        return TilePart.Right;
+                    return TilePart.Center;
+                case TilePart.BottomLeft:
+                    if (!west && !southWest && !south)
+                        return TilePart.BottomLeft;
+                    if (west && !southWest && !south)
+                        return TilePart.Bottom;
+                    if (!west && southWest && !south)
+                        return TilePart.BottomLeft;
+                    if (west && southWest && !south)
+                        return TilePart.Bottom;
+                    if (!west && !southWest && south)
+                        return TilePart.Left;
+                    if (west && !southWest && south)
+                        return TilePart.ConvexTopRight;
+                    if (!west && southWest && south)
+                        return TilePart.Left;
+                    return TilePart.Center;
+                case TilePart.Bottom:
+                    if (!south)
+                        return TilePart.Bottom;
+                    return TilePart.Center;
+                case TilePart.BottomRight:
+                    if (!east && !southEast && !south)
+                        return TilePart.BottomRight;
+                    if (east && !southEast && !south)
+                        return TilePart.Bottom;
+                    if (!east && southEast && !south)
+                        return TilePart.BottomRight;
+                    if (east && southEast && !south)
+                        return TilePart.Bottom;
+                    if (!east && !southEast && south)
+                        return TilePart.Right;
+                    if (east && !southEast && south)
+                        return TilePart.ConvexTopLeft;
+                    if (!east && southEast && south)
+                        return TilePart.Right;
+                    return TilePart.Center;
             }
-            this.sprite.draw(context.ctx, new Vector(this.x * Config.tileSize, this.y * Config.tileSize), frame);
+        };
+        Tile.prototype.getTileId = function (room, x, y) {
+            var tile = room.getTile(x, y);
+            if (!tile) {
+                return null;
+            }
+            return tile.id;
+        };
+        Tile.prototype.getPartPositionIndex = function (part) {
+            switch (part) {
+                default:
+                case TilePart.TopLeft:
+                    return new Vector(0, 0);
+                case TilePart.Top:
+                    return new Vector(1, 0);
+                case TilePart.TopRight:
+                    return new Vector(2, 0);
+                case TilePart.Left:
+                    return new Vector(0, 1);
+                case TilePart.Center:
+                    return new Vector(1, 1);
+                case TilePart.Right:
+                    return new Vector(2, 1);
+                case TilePart.BottomLeft:
+                    return new Vector(0, 2);
+                case TilePart.Bottom:
+                    return new Vector(1, 2);
+                case TilePart.BottomRight:
+                    return new Vector(2, 2);
+                case TilePart.ConvexTopLeft:
+                    return new Vector(3, 0);
+                case TilePart.ConvexTopRight:
+                    return new Vector(4, 0);
+                case TilePart.ConvexBottomLeft:
+                    return new Vector(3, 1);
+                case TilePart.ConvexBottomRight:
+                    return new Vector(4, 1);
+            }
         };
         return Tile;
     }());
@@ -2582,6 +2789,22 @@ var SilverGriffon;
         return FloorTile;
     }(Tile));
     SilverGriffon.FloorTile = FloorTile;
+    var TilePart;
+    (function (TilePart) {
+        TilePart[TilePart["TopLeft"] = 0] = "TopLeft";
+        TilePart[TilePart["Top"] = 1] = "Top";
+        TilePart[TilePart["TopRight"] = 2] = "TopRight";
+        TilePart[TilePart["Left"] = 3] = "Left";
+        TilePart[TilePart["Center"] = 4] = "Center";
+        TilePart[TilePart["Right"] = 5] = "Right";
+        TilePart[TilePart["BottomLeft"] = 6] = "BottomLeft";
+        TilePart[TilePart["Bottom"] = 7] = "Bottom";
+        TilePart[TilePart["BottomRight"] = 8] = "BottomRight";
+        TilePart[TilePart["ConvexTopLeft"] = 9] = "ConvexTopLeft";
+        TilePart[TilePart["ConvexTopRight"] = 10] = "ConvexTopRight";
+        TilePart[TilePart["ConvexBottomLeft"] = 11] = "ConvexBottomLeft";
+        TilePart[TilePart["ConvexBottomRight"] = 12] = "ConvexBottomRight";
+    })(TilePart = SilverGriffon.TilePart || (SilverGriffon.TilePart = {}));
 })(SilverGriffon || (SilverGriffon = {}));
 var SilverGriffon;
 (function (SilverGriffon) {

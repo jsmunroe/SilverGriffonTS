@@ -31,7 +31,7 @@ namespace SilverGriffon {
                             continue;
                         }
     
-                        tile.render(context);
+                        tile.render(context, room);
 
                         // if (!tile.passible) {
                         //     let tileBox = tile.box;

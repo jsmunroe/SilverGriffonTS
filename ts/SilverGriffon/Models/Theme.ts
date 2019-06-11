@@ -40,6 +40,7 @@ namespace SilverGriffon {
         private _sprite: Sprite = null;
         private _freq: number = 1;
         private _frameLength: number;
+        private _connects: boolean;
 
         constructor(type: string, themeElementConfig: any) {
             this._type = type;
@@ -48,6 +49,7 @@ namespace SilverGriffon {
             this._sprite.alignment = Alignment.topLeft;
             this._freq = themeElementConfig.freq;
             this._frameLength = themeElementConfig.frameLength || 100;
+            this._connects = themeElementConfig.connect;
         }
 
         get type() :string {
@@ -68,6 +70,10 @@ namespace SilverGriffon {
 
         get frameLength() :number {
             return this._frameLength;
+        }
+
+        get connects(): boolean {
+            return this._connects;
         }
     }
 }

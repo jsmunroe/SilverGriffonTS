@@ -15,6 +15,10 @@ namespace SilverGriffon {
             return room;
         }
 
+        protected setWall(room: Room, theme: Theme, x: number, y: number) {
+            room.setTile(x, y, new WallTile(theme.pickWall(), x, y))
+        }
+
         protected fillRect(room: Room, rect: Box, pickTile: ((x: number, y:number) => Tile)) {
             for (let y = rect.top; y < rect.bottom; y++) {
                 for (let x = rect.left; x < rect.right; x++) {

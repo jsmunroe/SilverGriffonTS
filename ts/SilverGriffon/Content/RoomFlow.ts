@@ -24,6 +24,8 @@ namespace SilverGriffon {
                 
                 engine.pushElement(character);
             }
+
+            engine.pushElement(new FPSElement());
             
 
             //engine.pushElement(new GridElement());

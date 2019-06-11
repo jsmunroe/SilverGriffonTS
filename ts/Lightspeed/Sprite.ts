@@ -1,4 +1,9 @@
 namespace Lightspeed {
+    export class SpritGrid {
+        constructor(imagePath: string, width: number, height: number, segmentsX: number, segmentsY: number) {
+            
+        }
+    }
     export class Sprite {
         private _isLoaded: boolean = false;
 
@@ -61,7 +66,7 @@ namespace Lightspeed {
             this._onLoadCallbacks.push(callback);
         }
 
-        draw(ctx: CanvasRenderingContext2D, position: Vector, frame?: number) {
+        draw(ctx: CanvasRenderingContext2D, position: Vector, size?: Size, frame?: number) {
             if (!this._isLoaded) {
                 return;
             }
@@ -78,6 +83,23 @@ namespace Lightspeed {
             ctx.drawImage(this._image, 
                 frame * sourceFrameWidth, 0, sourceFrameWidth, this._image.height,
                 drawBox.left, drawBox.top, drawBox.width, drawBox.height);
+
+            ctx.restore();
+        }
+
+        drawPart(ctx: CanvasRenderingContext2D, sourcePosition: Vector, sourceSize: Size, destPosition: Vector, destSize: Size) {
+            if (!this._isLoaded) {
+                return;
+            }
+
+            ctx.save();
+
+            var sourceBox = Box.fromLocationAndSize(sourcePosition, sourceSize);
+            var destBox = Box.fromLocationAndSize(destPosition, destSize, this.alignment);
+
+            ctx.globalAlpha = this.opacity;
+            ctx.drawImage(this._image, sourceBox.left, sourceBox.top, sourceBox.width, sourceBox.height, 
+                                       destBox.left, destBox.top, destBox.width, destBox.height);
 
             ctx.restore();
         }

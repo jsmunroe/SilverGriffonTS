@@ -53,7 +53,7 @@ namespace SilverGriffon {
             
             var frame = this.getDirection() * 3 + frameOffset;;
 
-            this._sprite.draw(context.ctx, this.position, frame);
+            this._sprite.draw(context.ctx, this.position, null, frame);
 
             // context.ctx.strokeStyle = 'blue';
             // context.ctx.strokeRect(this.box.left, this.box.top, this.box.width, this.box.height);

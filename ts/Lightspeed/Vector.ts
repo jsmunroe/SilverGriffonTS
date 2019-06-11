@@ -40,6 +40,10 @@ namespace Lightspeed {
             return new Vector(this.x * scalar, this.y * scalar);
         }
 
+        public offset(x: number, y?: number) :Vector {
+            return new Vector(this.x + x, this.y + (y || x));
+        }
+
         public dot(other: Vector) :number {
             return this.x * other.x + this.y * other.y;
         }
